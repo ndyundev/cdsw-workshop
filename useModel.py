@@ -8,7 +8,7 @@ def predict_survival(args):
   logmodel = joblib.load('my_model.pkl')
 
   testEntry = pd.DataFrame.from_records([{'Pclass': args['Pclass'],'SibSp': args['SibSp'],'Parch': args['Parch'],'Fare': args['Fare'],'male':args['male'],'Q':args['Q'],'S':args['S']}
-                                        ])
+                                        ],columns=['Pclass', 'SibSp', 'Parch','Fare','male','Q','S'])
 
   testEst=logmodel.predict(testEntry.astype(np.float64))
   print(testEst.show())
@@ -19,7 +19,7 @@ def predict_survival(args):
 print(predict_survival({'Pclass': 1.0,'SibSp': 0.0,'Parch': 0.0,'Fare': 7.2292,'male':0.0,'Q':0.0,'S':0.0}))
 
 #```
-#{'Pclass': 3.0,'SibSp': 1.0,'Parch': 0.0,'Fare': 7.2292,'male':1.0,'Q':0.0,'S':0.0}
+#{"Pclass": 3,"SibSp": 1,"Parch": 0,"Fare": 7.2292,"male":1,"Q":0,"S":0 }
 #```
 
 # Example output:
