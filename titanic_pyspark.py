@@ -1,4 +1,5 @@
 from pyspark.sql import SparkSession
+import numpy as np
 
 # Then call the `getOrCreate()` method of
 # `SparkSession.builder` to connect to Spark. This
@@ -64,8 +65,6 @@ titanic_data_pd
 
 # Caution: When working with a large Spark DataFrame,
 # limit the number of rows before returning a pandas
-# DataFrame
-
 
 
 
@@ -125,12 +124,6 @@ titanic_sample_pd = titanic_data \
 
 titanic_sample_pd.plot.scatter(x="Pclass", y="Fare")
 
-# The scatterplot seems to show a positive linear
-# association between columns.
-
-
-
-
 
 
 
@@ -148,7 +141,7 @@ titanic_sample_pd.plot.scatter(x="Pclass", y="Fare")
 # columns and with missing values removed:
 
 titanic_to_model = titanic_data \
-  .select("pclass", "Fare") \
+  .select("Survived","Pclass","SibSp","Parch", "Fare","male","Q","S") \
   .dropna()
 
 # MLlib requires all predictor columns be combined into
@@ -160,25 +153,29 @@ from pyspark.ml.feature import VectorAssembler
 # In this example, there is only one predictor (input)
 # variable: `dep_delay`.
 
-assembler = VectorAssembler(inputCols=["dep_delay"], outputCol="features")
+assembler = VectorAssembler(inputCols=["Pclass","SibSp",'Parch', "Fare","male","Q","S"], outputCol="features")
 
 # Use the `VectorAssembler` to assemble the data:
 
-flights_assembled = assembler.transform(flights_to_model)
-flights_assembled.show(5)
+titanic_data_assembled = assembler.transform(titanic_to_model)
+titanic_data_assembled.show(5)
 
 # Randomly split the assembled data into a training
 # sample (70% of records) and a test sample (30% of
 # records):
 
-(train, test) = flights_assembled.randomSplit([0.7, 0.3])
+(train, test) = titanic_data_assembled.randomSplit([0.7, 0.3])
+
+
+test.show()
 
 # Import and use `LinearRegression` to specify the linear
 # regression model and fit it to the training sample:
 
-from pyspark.ml.regression import LinearRegression
+from pyspark.ml.classification import LogisticRegression
 
-lr = LinearRegression(featuresCol="features", labelCol="arr_delay")
+
+lr = LogisticRegression(featuresCol="features", labelCol="Survived")
 
 lr_model = lr.fit(train)
 
@@ -188,15 +185,30 @@ lr_model.intercept
 
 lr_model.coefficients
 
-# Evaluate the linear model on the test sample:
+# Evaluate the model on the test sample:
+predictions = lr_model.transform(test)
 
+testEntry = pd.DataFrame.from_records([{'Pclass': 3.0,'SibSp': 1.0,'Parch': 0.0,'Fare': 7.2292,'male':1.0,'Q':0.0,'S':0.0},
+                                       {'Pclass': 1.0,'SibSp': 0.0,'Parch': 0.0,'Fare': 7.2292,'male':0.0,'Q':0.0,'S':0.0},
+                                       {'Pclass': 3.0,'SibSp': 1.0,'Parch': 0.0,'Fare': 16.1,'male':0.0,'Q':0.0,'S':1.0},
+                                       {'Pclass': 3.0,'SibSp': 0.0,'Parch': 0.0,'Fare': 8.0292,'male':0.0,'Q':0.0,'S':0.0}
+                                      ])
+#convert pandas df into spark df
+testEntry = spark.createDataFrame(testEntry)
+
+titanic_to_model.show()
+testEntry.show()
+testEntry_assembled = assembler.transform(testEntry)
+testEntry_assembled.show(5)
+predictions = lr_model.transform(testEntry_assembled)
+predictions.select("prediction").show()
 lr_summary = lr_model.evaluate(test)
 
 # R-squared is the fraction of the variance in the test
 # sample that is explained by the model:
 
-lr_summary.r2
-
+lr_summary.pr.show()
+lr_summary.areaUnderROC
 
 # ### Cleanup
 

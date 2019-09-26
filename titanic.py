@@ -1,5 +1,5 @@
 #install -> joblib-0.13.2 scikit-learn-0.21.3 sklearn-0.0
-#!pip3 install sklearn
+#!pip install sklearn
 #!pip install joblib
 
 
@@ -50,27 +50,35 @@ sex = pd.get_dummies(train['Sex'],drop_first=True)
 # Use same procedure to 
 embark = pd.get_dummies(train['Embarked'],drop_first=True)
 
-train.drop(['PassengerId','Sex','Embarked','Name','Ticket'],axis=1,inplace=True)
+#add newly generated columns
+train = pd.concat([train,sex,embark],axis=1)
+#and drop the exisintg/old ones
+train.drop(['Sex','Embarked'],axis=1,inplace=True)
+
+# store the dataset as 'titanic_clean.csv'
+train.to_csv('titanic_clean.csv',index=False)
+
+# remove unwanted columns for training
+train.drop(['PassengerId','Name','Ticket'],axis=1,inplace=True)
+
 #Pclass - passenger class
 #SibSp - siblings or spouses onboard
 #Parch - parents or children onboard
 
-train = pd.concat([train,sex,embark],axis=1)
-
 train.head()
 
-
+#
 # # Let's do ML
+#
 
 
-
-# \n Train/Test split
+# Train/Test split
 from sklearn.model_selection import train_test_split
 
 X_train, X_test, y_train, y_test = train_test_split(train.drop('Survived',axis=1), 
                                                     train['Survived'], test_size=0.3, random_state=65)
 
-#\n Training the model
+# Training the model
 
 from sklearn.linear_model import LogisticRegression
 
@@ -89,27 +97,30 @@ from sklearn.metrics import classification_report
 
 print(classification_report(y_test,predictions))
 
-train.head()
-X_test.head()
-y_test.head()
-help(logmodel)
+testEntry = pd.DataFrame.from_records([{'Pclass': 3.0,'SibSp': 1.0,'Parch': 0.0,'Fare': 7.2292,'male':1.0,'Q':0.0,'S':0.0},
+                                       {'Pclass': 1.0,'SibSp': 0.0,'Parch': 0.0,'Fare': 7.2292,'male':0.0,'Q':0.0,'S':0.0},
+                                       {'Pclass': 3.0,'SibSp': 1.0,'Parch': 0.0,'Fare': 16.1,'male':0.0,'Q':0.0,'S':1.0},
+                                       {'Pclass': 3.0,'SibSp': 0.0,'Parch': 0.0,'Fare': 8.0292,'male':0.0,'Q':0.0,'S':0.0}
+                                      ],columns=['Pclass', 'SibSp', 'Parch','Fare','male','Q','S'])
+
+testEntry = testEntry.astype(np.float64)
+help(testEntry)
+print(testEntry)
+testEst=logmodel.predict(testEntry)
+print(testEst)
 
 for index, row in X_test.iterrows():
   if(logmodel.predict(pd.DataFrame.from_records([row]))==[1]):
-    print("\nfound one ",str(row))
+    print("\nfound one ",str(row),"---->",logmodel.predict(pd.DataFrame.from_records([row])))
 
-testEntry = pd.DataFrame.from_records([{'Pclass': 3.0,'': 1.0,'Parch': 0.0,'Fare': 7.2292,'male':1.0,'Q':0.0,'S':0.0},
-                                       {'Pclass': 1.0,'': 0.0,'Parch': 0.0,'Fare': 7.2292,'male':0.0,'Q':0.0,'S':0.0}
-                                      ])
-testEntry.dtypes
-testEst=logmodel.predict(testEntry.astype(np.float64))
-print(testEst)
 
-help(logmodel)
+
 import joblib
 joblib.dump(logmodel, 'my_model.pkl', compress=9)
 
-train.to_csv(r'titanic_clean.csv')
-
+#train.to_csv(r'titanic_clean.csv')
+##train.to_parquet('titanic_clean.pqt')
+#help(train)
 !hdfs dfs -mkdir titanic
+!hdfs dfs -rm titanic/titanic_clean.csv
 !hdfs dfs -put titanic_clean.csv titanic/
