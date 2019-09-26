@@ -1,13 +1,9 @@
-#install -> joblib-0.13.2 scikit-learn-0.21.3 sklearn-0.0
-#!pip install sklearn
-#!pip install joblib
-
-
+import json
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import seaborn as sns
 %matplotlib inline
+
 
 # # Reading the 'titanic_train.csv' into a pandas dataframe
 # Comments in a code file in CDSW can include
@@ -104,19 +100,18 @@ testEntry = pd.DataFrame.from_records([{'Pclass': 3.0,'SibSp': 1.0,'Parch': 0.0,
                                       ],columns=['Pclass', 'SibSp', 'Parch','Fare','male','Q','S'])
 
 testEntry = testEntry.astype(np.float64)
-help(testEntry)
-print(testEntry)
+
 testEst=logmodel.predict(testEntry)
 print(testEst)
 
-for index, row in X_test.iterrows():
-  if(logmodel.predict(pd.DataFrame.from_records([row]))==[1]):
-    print("\nfound one ",str(row),"---->",logmodel.predict(pd.DataFrame.from_records([row])))
 
-
-
-import joblib
-joblib.dump(logmodel, 'my_model.pkl', compress=9)
+serialize = json.dumps
+data = {}
+data['init_params'] = logmodel.get_params()
+data['model_params'] = mp = {}
+for p in ('coef_', 'intercept_','classes_', 'n_iter_'):
+    mp[p] = getattr(logmodel, p).tolist()
+print("model in json format -> ",serialize(data))
 
 #train.to_csv(r'titanic_clean.csv')
 ##train.to_parquet('titanic_clean.pqt')

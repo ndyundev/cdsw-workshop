@@ -1,2 +1,2 @@
-!pip install sklearn
-!pip install joblib
+pip install sklearn
+pip install joblib
