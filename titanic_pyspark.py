@@ -58,6 +58,11 @@ titanic_data_pd
 # grid, import pandas and set the pandas option
 # `display.html.table_schema` to `True`:
 
+
+from pyspark.sql.functions import col,lit
+# show passengers form only from 1st class
+titanic_data.filter(col("Pclass")==lit(1)).show()
+
 import pandas as pd
 pd.set_option("display.html.table_schema", True)
 
@@ -208,6 +213,15 @@ lr_summary = lr_model.evaluate(test)
 # sample that is explained by the model:
 
 lr_summary.areaUnderROC
+
+
+#Parquet examples
+
+titanic_data.write.parquet("titanic.pqt")
+titanic_pqt_df = spark.read.parquet("titanic.pqt")
+titanic_pqt_df.show()
+
+
 
 # ### Cleanup
 
