@@ -207,7 +207,6 @@ lr_summary = lr_model.evaluate(test)
 # R-squared is the fraction of the variance in the test
 # sample that is explained by the model:
 
-lr_summary.pr.show()
 lr_summary.areaUnderROC
 
 # ### Cleanup

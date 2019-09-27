@@ -40,10 +40,10 @@ sns.heatmap(train.isnull(),cbar=False)
 #Aall data is complete now!
 
 # # Now let us make all data numerical!
-#Instead of having sex to be male/femail -> make it a boolean variable
+#Instead of having male/femail -> make it a boolean variable
 sex = pd.get_dummies(train['Sex'],drop_first=True)
 
-# Use same procedure to 
+# Use same procedure for the Embarked column 
 embark = pd.get_dummies(train['Embarked'],drop_first=True)
 
 #add newly generated columns
@@ -67,7 +67,7 @@ train.head()
 # # Let's do ML
 #
 
-
+!pip install sklearn
 # Train/Test split
 from sklearn.model_selection import train_test_split
 
